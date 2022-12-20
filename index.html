@@ -224,13 +224,6 @@
 					let ctx = inBox.getContext('2d');
 					ctx.clearRect(0, 0, size, size);
 
-                    let container = document.getElementById('flake-container');
-                    if (this.alternateDisplay) {
-                        container.classList.add('reverse');
-                    } else {
-                        container.classList.remove('reverse');
-                    }
-
 					inBox.width >> 1;						
 					inBox.height >> 1;
 					ctx.globalCompositeOperation = "soft-light";
