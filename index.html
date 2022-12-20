@@ -1,0 +1,288 @@
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type="text/css">
+        html {
+            background: #000;
+        }
+
+        .render-box {
+            display: block;
+            position: fixed;
+            width: 400px;
+            max-width: calc(100% - 40px);
+            aspect-ratio: 1;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: black;
+        }
+
+        .flake-renderer {
+            position: relative;
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        .flake-output {
+            position: absolute;
+            display: block;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: 1s opacity ease-in-out;
+        }
+
+        .flake-output.active {
+            opacity: 1;
+        }
+
+        .flake-container {
+            position: relative;
+            display: block;
+            width: 100%;
+            height: 100%;
+
+            animation-name: rotate;
+            animation-duration: 6s;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .render-container {
+            display: block;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .center-item {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .overlay {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            mix-blend-mode: hard-light;
+            background: linear-gradient(48deg,
+                    #e3c1f4,
+                    #d9d7ed,
+                    #dff7f1,
+                    #acf0ff);
+            z-index: 1;
+            opacity: 0.95;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="render-box">
+        <div class="overlay">
+        </div>
+        <div class="flake-container">
+            <canvas id="display-1" class="flake-output">
+            </canvas>
+            <canvas id="display-2" class="flake-output">
+            </canvas>
+        </div>
+    </div>
+    <script type="text/javascript" language="javascript">
+			window.snowFlake = window.snowFlake || {};
+
+			(function (snowFlake) {
+				var iterations = [];
+				var size = 400;
+				var chanceIncrease = 2;				
+				var startY = size / 2;
+				var alternateDisplay = false;
+				let renderer = document.createElement('canvas');
+				renderer.width = size;
+				renderer.height = size;
+				
+				var renderChance = 0.01;
+				let dBox1 = document.getElementById("display-1");
+				dBox1.width = size;
+				dBox1.height = size;
+				let dBox2 = document.getElementById("display-2");
+				dBox2.width = size;
+				dBox2.height = size;
+				
+				snowFlake.initialize = function () {																	
+					let ctx = renderer.getContext('2d');
+					ctx.clearRect(0, 0, size, size);
+				
+					let drawHex = function(size, x, y) {
+						let sz = size / 2;
+						ctx.beginPath();
+						ctx.moveTo(x + sz * Math.cos(0), y + sz * Math.sin(0));
+
+						for (let s = 0; s < 7; s++) {
+						  ctx.lineTo(x + sz * Math.cos(s * 2 * Math.PI / 6), y + sz * Math.sin(s * 2 * Math.PI / 6));
+						}
+
+						ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+						ctx.strokeStyle = "rgba(50, 150, 255, 0.75)";
+						ctx.lineWidth = "5px";
+						ctx.fill();
+						ctx.stroke();
+					};
+							
+					var branches = [];
+					
+					branches.push({						
+						directions: [0],
+						currentRenderChance: renderChance,
+						splitChance: 0.02,
+						iteration: 0,
+						start: 0,
+						positions: [{x: size / 2, y: size / 2}]						
+					});
+					
+					let deg2rad = function (x) {
+						return x / 180 * Math.PI; 
+					};
+					
+					for (let i = 0; i < (size / 2) - (size / 8); i++) {
+						for (let j = 0; j < branches.length; j++) {
+
+							let b = branches[j];
+							let check = Math.random();
+							if (b.currentRenderChance === 1 || check < b.currentRenderChance) {
+							
+								let isSplitting = false;
+								let newDirections = [];
+								let newPositions = [];
+								
+								if (b.iteration < 3) {
+									let sCheck = Math.random();
+									if (b.splitChance === 1 || sCheck < b.splitChance) {
+										isSplitting = true;
+										b.splitChance = 0.02;
+									} else {
+										b.splitChance = Math.min(Math.pow(1 + b.splitChance, chanceIncrease) - 1, 1);
+									}
+								}
+							
+								let d = ((size) / (Math.pow(2, 3 + b.iteration)) - (size - i) / (Math.pow(2, 4 + b.iteration))) / 1.5;
+								let s = Math.random() * d;			
+							
+								for (let k = 0; k < b.directions.length; k++) {
+									let direction = b.directions[k];
+									let position = b.positions[k];
+									
+									let newX = position.x - ((Math.sin(deg2rad(direction)) * (i - b.start)) / Math.pow(2, b.iteration));
+									let newY = position.y - ((Math.cos(deg2rad(direction)) * (i - b.start)) / Math.pow(2, b.iteration));
+									
+									ctx.globalCompositeOperation = "hue";		
+									drawHex(s, newX, newY);	
+									
+									/*
+									let div = document.createElement('div');
+									div.classList.add('hexagon');																					
+									div.style.width = s + 'px';
+									div.style.height = s + 'px';
+									// distance from base
+									
+									div.style.left = newX + 'px';
+									div.style.top = newY + 'px';
+									document.getElementById('snow-flake-root').appendChild(div);
+									*/
+
+									//i += d / 20;
+
+									if (isSplitting) {
+										newDirections.push(direction - 60);
+										newDirections.push(direction + 60);
+										
+										newPositions.push({ x: newX, y: newY });
+										newPositions.push({ x: newX, y: newY });
+									}									
+								}								
+								b.currentRenderChance = (Math.pow(2, b.iteration)) * renderChance;
+								
+								if (isSplitting) {
+									branches.push({
+										directions: newDirections,
+										currentRenderChance: (Math.pow(2, b.iteration + 1)) * renderChance,
+										splitChance: 0.02,
+										iteration: b.iteration + 1,
+										start: i,
+										positions: newPositions
+									});
+								}
+
+									
+							} else {
+								b.currentRenderChance = Math.min(Math.pow(1 + b.currentRenderChance, chanceIncrease) - 1, 1);
+							}
+						}
+					}
+
+				};
+				
+				snowFlake.initialize();	
+				
+				let renderLoop = function () {
+					let inBox = document.getElementById(this.alternateDisplay ? 'display-2' : 'display-1');
+					let outBox = document.getElementById(this.alternateDisplay ? 'display-1' : 'display-2');
+					let ctx = inBox.getContext('2d');
+					ctx.clearRect(0, 0, size, size);
+
+					inBox.width >> 1;						
+					inBox.height >> 1;
+					ctx.globalCompositeOperation = "soft-light";
+					
+					for (let r = 0; r < 6; r++) {
+						ctx.save();		
+
+						ctx.translate(size / 2, size / 2);  
+						ctx.rotate(r * -60 * Math.PI / 180 );
+						ctx.translate(-size / 2, -size / 2);  
+						ctx.drawImage(renderer, 0, 0);	
+						
+						ctx.restore();
+					}			
+					
+					
+					inBox.classList.add('active');
+					outBox.classList.remove('active');
+											
+					this.alternateDisplay = !this.alternateDisplay;
+										
+					snowFlake.initialize();
+				};
+				
+				renderLoop();
+				window.setInterval(function () {
+					renderLoop();
+				}, 3000);			
+			}(window.snowFlake = window.snowFlake || {}));
+    </script>
+</body>
+
+</html>
