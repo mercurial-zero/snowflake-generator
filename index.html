@@ -46,9 +46,13 @@
             height: 100%;
 
             animation-name: rotate;
-            animation-duration: 6s;
+            animation-duration: 18s;
             animation-iteration-count: infinite;
             animation-timing-function: linear;
+        }
+
+        .flake-container.reverse {
+            animation-direction: reverse;
         }
 
         @keyframes rotate {
@@ -85,7 +89,7 @@
     <div class="render-box">
         <div class="background">
         </div>
-        <div class="flake-container">
+        <div id="flake-container" class="flake-container">
             <canvas id="display-1" class="flake-output">
             </canvas>
             <canvas id="display-2" class="flake-output">
@@ -220,6 +224,13 @@
 					let ctx = inBox.getContext('2d');
 					ctx.clearRect(0, 0, size, size);
 
+                    let container = document.getElementById('flake-container');
+                    if (this.alternateDisplay) {
+                        container.classList.add('reverse');
+                    } else {
+                        container.classList.remove('reverse');
+                    }
+
 					inBox.width >> 1;						
 					inBox.height >> 1;
 					ctx.globalCompositeOperation = "soft-light";
@@ -247,7 +258,7 @@
 				renderLoop();
 				window.setInterval(function () {
 					renderLoop();
-				}, 3000);			
+				}, 6000);			
 			}(window.snowFlake = window.snowFlake || {}));
     </script>
 </body>
